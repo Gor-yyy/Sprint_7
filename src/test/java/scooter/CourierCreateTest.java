@@ -1,11 +1,17 @@
 package scooter;
 
+import io.qameta.allure.Description;
 import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_CONFLICT;
+import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.apache.http.HttpStatus.SC_OK;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CourierCreateTest {
 
@@ -27,65 +33,67 @@ public class CourierCreateTest {
 
     @After
     public void cleanUp() {
-
         Response loginResponse =
                 courierClient.login(CourierCredentials.from(courier));
 
-        if (loginResponse.statusCode() == 200) {
+        if (loginResponse.statusCode() == SC_OK) {
             int courierId = loginResponse.jsonPath().getInt("id");
             courierClient.delete(courierId);
         }
     }
 
     @Test
-    public void courierCanBeCreated() {
-
+    @Description("Проверяем успешное создание курьера со всеми обязательными полями")
+    public void courierCanBeCreatedTest() {
         Response response = courierClient.create(courier);
 
-        assertEquals(201, response.statusCode());
+        assertEquals(SC_CREATED, response.statusCode());
         assertTrue(response.jsonPath().getBoolean("ok"));
     }
 
     @Test
-    public void cannotCreateTwoIdenticalCouriers() {
-
+    @Description("Проверяем, что нельзя создать двух одинаковых курьеров")
+    public void cannotCreateTwoIdenticalCouriersTest() {
         courierClient.create(courier);
 
-        Response secondResponse =
-                courierClient.create(courier);
+        Response secondResponse = courierClient.create(courier);
 
-        assertEquals(409, secondResponse.statusCode());
-        assertNotNull(
+        assertEquals(SC_CONFLICT, secondResponse.statusCode());
+
+        assertEquals(
+                "Этот логин уже используется. Попробуйте другой.",
                 secondResponse.jsonPath().getString("message")
         );
     }
 
     @Test
-    public void cannotCreateCourierWithoutLogin() {
-
+    @Description("Проверяем ошибку при создании курьера без обязательного поля login")
+    public void cannotCreateCourierWithoutLoginTest() {
         Courier courierWithoutLogin =
                 new Courier(null, "123456", "Gor");
 
-        Response response =
-                courierClient.create(courierWithoutLogin);
+        Response response = courierClient.create(courierWithoutLogin);
 
-        assertEquals(400, response.statusCode());
-        assertNotNull(
+        assertEquals(SC_BAD_REQUEST, response.statusCode());
+
+        assertEquals(
+                "Недостаточно данных для создания учетной записи",
                 response.jsonPath().getString("message")
         );
     }
 
     @Test
-    public void cannotCreateCourierWithoutPassword() {
-
+    @Description("Проверяем ошибку при создании курьера без обязательного поля password")
+    public void cannotCreateCourierWithoutPasswordTest() {
         Courier courierWithoutPassword =
                 new Courier(courier.getLogin(), null, "Gor");
 
-        Response response =
-                courierClient.create(courierWithoutPassword);
+        Response response = courierClient.create(courierWithoutPassword);
 
-        assertEquals(400, response.statusCode());
-        assertNotNull(
+        assertEquals(SC_BAD_REQUEST, response.statusCode());
+
+        assertEquals(
+                "Недостаточно данных для создания учетной записи",
                 response.jsonPath().getString("message")
         );
     }

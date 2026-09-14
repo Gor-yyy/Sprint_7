@@ -1,36 +1,33 @@
 package scooter;
 
 import io.restassured.response.Response;
-
+import io.qameta.allure.Step;
 import static io.restassured.RestAssured.given;
+import static scooter.Endpoints.ORDERS;
+import static scooter.Endpoints.ORDER_CANCEL;
 
-public class OrderClient {
-
-    private static final String BASE_URL =
-            "https://qa-scooter.praktikum-services.ru";
-
+public class OrderClient extends BaseClient {
+    @Step("Создание заказа")
     public Response create(Order order) {
         return given()
-                .baseUri(BASE_URL)
-                .header("Content-type", "application/json")
+                .spec(REQUEST_SPEC)
                 .body(order)
                 .when()
-                .post("/api/v1/orders");
+                .post(ORDERS);
     }
-
+    @Step("Отмена заказа")
     public Response cancel(int track) {
         return given()
-                .baseUri(BASE_URL)
-                .header("Content-type", "application/json")
+                .spec(REQUEST_SPEC)
                 .body("{\"track\":" + track + "}")
                 .when()
-                .put("/api/v1/orders/cancel");
+                .put(ORDER_CANCEL);
     }
-
+    @Step("Получение списка заказов")
     public Response getOrders() {
         return given()
-                .baseUri(BASE_URL)
+                .spec(REQUEST_SPEC)
                 .when()
-                .get("/api/v1/orders");
+                .get(ORDERS);
     }
 }

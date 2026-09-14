@@ -1,36 +1,33 @@
 package scooter;
 
 import io.restassured.response.Response;
-
+import io.qameta.allure.Step;
 import static io.restassured.RestAssured.given;
+import static scooter.Endpoints.COURIER;
+import static scooter.Endpoints.COURIER_LOGIN;
 
-public class CourierClient {
-
-    private static final String BASE_URL =
-            "https://qa-scooter.praktikum-services.ru";
-
+public class CourierClient extends BaseClient {
+    @Step("Создание курьера")
     public Response create(Courier courier) {
         return given()
-                .baseUri(BASE_URL)
-                .header("Content-type", "application/json")
+                .spec(REQUEST_SPEC)
                 .body(courier)
                 .when()
-                .post("/api/v1/courier");
+                .post(COURIER);
     }
-
+    @Step("Авторизация курьера")
     public Response login(CourierCredentials credentials) {
         return given()
-                .baseUri(BASE_URL)
-                .header("Content-type", "application/json")
+                .spec(REQUEST_SPEC)
                 .body(credentials)
                 .when()
-                .post("/api/v1/courier/login");
+                .post(COURIER_LOGIN);
     }
-
+    @Step("Удаление курьера")
     public Response delete(int courierId) {
         return given()
-                .baseUri(BASE_URL)
+                .spec(REQUEST_SPEC)
                 .when()
-                .delete("/api/v1/courier/" + courierId);
+                .delete(COURIER + "/" + courierId);
     }
 }

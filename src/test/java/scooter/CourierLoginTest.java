@@ -1,11 +1,16 @@
 package scooter;
 
+import io.qameta.allure.Description;
 import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import static org.junit.Assert.*;
+import static org.apache.http.HttpStatus.SC_BAD_REQUEST;
+import static org.apache.http.HttpStatus.SC_NOT_FOUND;
+import static org.apache.http.HttpStatus.SC_OK;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class CourierLoginTest {
 
@@ -34,7 +39,7 @@ public class CourierLoginTest {
             Response response =
                     courierClient.login(CourierCredentials.from(courier));
 
-            if (response.statusCode() == 200) {
+            if (response.statusCode() == SC_OK) {
                 courierId = response.jsonPath().getInt("id");
             }
         }
@@ -45,40 +50,62 @@ public class CourierLoginTest {
     }
 
     @Test
-    public void courierCanLogin() {
+    @Description("Проверяем, что существующий курьер может авторизоваться и получает id")
+    public void courierCanLoginTest() {
         Response response =
                 courierClient.login(CourierCredentials.from(courier));
 
-        assertEquals(200, response.statusCode());
+        assertEquals(SC_OK, response.statusCode());
 
         courierId = response.jsonPath().getInt("id");
+
         assertTrue(courierId > 0);
     }
 
     @Test
-    public void cannotLoginWithoutLogin() {
+    @Description("Проверяем ошибку при авторизации без обязательного поля login")
+    public void cannotLoginWithoutLoginTest() {
         CourierCredentials credentials =
-                new CourierCredentials(null, courier.getPassword());
+                new CourierCredentials(
+                        null,
+                        courier.getPassword()
+                );
 
         Response response = courierClient.login(credentials);
 
-        assertEquals(400, response.statusCode());
-        assertNotNull(response.jsonPath().getString("message"));
+        assertEquals(SC_BAD_REQUEST, response.statusCode());
+
+        assertEquals(
+                "Недостаточно данных для входа",
+                response.jsonPath().getString("message")
+        );
     }
 
     @Test
-    public void cannotLoginWithoutPassword() {
+    @Description("Проверяем ошибку при авторизации без обязательного поля password")
+    public void cannotLoginWithoutPasswordTest() {
         CourierCredentials credentials =
-                new CourierCredentials(courier.getLogin(), null);
+                new CourierCredentials(
+                        courier.getLogin(),
+                        null
+                );
 
         Response response = courierClient.login(credentials);
 
-        assertEquals(400, response.statusCode());
-        assertNotNull(response.jsonPath().getString("message"));
+        System.out.println("STATUS CODE: " + response.statusCode());
+        System.out.println("RESPONSE BODY: " + response.asString());
+
+        assertEquals(SC_BAD_REQUEST, response.statusCode());
+
+        assertEquals(
+                "Недостаточно данных для входа",
+                response.jsonPath().getString("message")
+        );
     }
 
     @Test
-    public void cannotLoginWithWrongLogin() {
+    @Description("Проверяем ошибку при авторизации курьера с несуществующим логином")
+    public void cannotLoginWithWrongLoginTest() {
         CourierCredentials credentials =
                 new CourierCredentials(
                         "wrong_" + System.currentTimeMillis(),
@@ -87,12 +114,17 @@ public class CourierLoginTest {
 
         Response response = courierClient.login(credentials);
 
-        assertEquals(404, response.statusCode());
-        assertNotNull(response.jsonPath().getString("message"));
+        assertEquals(SC_NOT_FOUND, response.statusCode());
+
+        assertEquals(
+                "Учетная запись не найдена",
+                response.jsonPath().getString("message")
+        );
     }
 
     @Test
-    public void cannotLoginWithWrongPassword() {
+    @Description("Проверяем ошибку при авторизации курьера с неверным паролем")
+    public void cannotLoginWithWrongPasswordTest() {
         CourierCredentials credentials =
                 new CourierCredentials(
                         courier.getLogin(),
@@ -101,7 +133,11 @@ public class CourierLoginTest {
 
         Response response = courierClient.login(credentials);
 
-        assertEquals(404, response.statusCode());
-        assertNotNull(response.jsonPath().getString("message"));
+        assertEquals(SC_NOT_FOUND, response.statusCode());
+
+        assertEquals(
+                "Учетная запись не найдена",
+                response.jsonPath().getString("message")
+        );
     }
 }

@@ -1,5 +1,6 @@
 package scooter;
 
+import io.qameta.allure.Description;
 import io.restassured.response.Response;
 import org.junit.After;
 import org.junit.Test;
@@ -11,7 +12,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.Assert.*;
+import static org.apache.http.HttpStatus.SC_CREATED;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(Parameterized.class)
 public class CreateOrderTest {
@@ -41,7 +44,8 @@ public class CreateOrderTest {
     }
 
     @Test
-    public void orderCanBeCreatedWithDifferentColors() {
+    @Description("Проверяем создание заказа с цветом BLACK, GREY, обоими цветами и без указания цвета")
+    public void orderCanBeCreatedWithDifferentColorsTest() {
 
         Order order = new Order(
                 "Gor",
@@ -58,7 +62,7 @@ public class CreateOrderTest {
         Response response =
                 new OrderClient().create(order);
 
-        assertEquals(201, response.statusCode());
+        assertEquals(SC_CREATED, response.statusCode());
 
         track = response.jsonPath().getInt("track");
 
